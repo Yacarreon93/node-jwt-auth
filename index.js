@@ -2,14 +2,19 @@ const express  = require("express");
 const bodyParser = require("body-parser");
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
+const expressjwt = require("express-jwt");
 
 const app = express();
-const PORT = process.env.PORT || 8888;
+const PORT = process.env.API_PORT || 8888;
 
 const users = [
     { id: 1, username: "admin", password: "admin" },
     { id: 2, username: "guest", password: "guest" },
 ];
+
+const jwtCheck = expressjwt({
+    secret: "mysupersecretkey",
+});
 
 app.use(bodyParser.json());
 app.use(cors());
@@ -45,6 +50,18 @@ app.get("/status", (req, res) => {
     res
         .status(200)
         .send(`Server time is ${localTime}.`);
+});
+
+app.get("/resources", (req, res) => {
+    res
+        .status(200)
+        .send("Public resources, you can see this");
+});
+
+app.get("/resources/secret", jwtCheck, (req, res) => {
+    res
+        .status(200)
+        .send("Secret resources, you should be logged in to see this");
 });
 
 app.get("*", (req, res) => {
