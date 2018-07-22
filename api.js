@@ -1,6 +1,7 @@
 const express  = require("express");
 const cors = require("cors");
 const expressjwt = require("express-jwt");
+const path = require("path");
 
 const app = express();
 const PORT = process.env.API_PORT || 8888;
@@ -11,7 +12,9 @@ const users = [
 ];
 
 const jwtCheck = expressjwt({
-    secret: "mysupersecretkey",
+    secret: 'GlENyogN9wMLFlYLMPGgQl4ptxL0gWio',
+    audience: 'eggehead-demo',
+    issuer: "https://yassercarreon.auth0.com/"
 });
 
 app.use(cors());
@@ -34,6 +37,12 @@ app.get("/resources/secret", jwtCheck, (req, res) => {
         .status(200)
         .send("Secret resources, you should be logged in to see this");
 });
+
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname + '/index.html'));
+});
+
+app.use("/public", express.static(__dirname + "/public"));
 
 app.get("*", (req, res) => {
     res.sendStatus(404);
