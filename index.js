@@ -1,7 +1,17 @@
 const express  = require("express");
+const bodyParser = require("body-parser");
 
 const app = express();
-const PORT = 8888;
+const PORT = process.env.PORT || 8888;
+
+app.use(bodyParser.json());
+
+app.post("/login", (req, res) => {
+    const user = req.body.username;
+    res
+        .status(200)
+        .send(`You logged in with ${user}.`)
+});
 
 app.get("/status", (req, res) => {
     const localTime = (new Date()).toLocaleDateString();
