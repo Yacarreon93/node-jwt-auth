@@ -4,33 +4,39 @@ const router = express.Router();
 const User = require("../models/user");
 const jwt = require("jsonwebtoken");
 
-const rounds = 10;
-const tokenSecret = "supersecret";
-
-router.get("/login", (req, res) => {
-  res.send("okidoki");
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email }).exec();
+    if (!user) res.status(401).send("Password or email wrong");
+    const result = await bcrypt.compare(password, user.password);
+    if (!result) res.status(401).send("Password or email wrong");
+    res.status(200).json({ token: generateToken(user) });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json(error);
+  }
 });
 
-router.post("/signup", (req, res) => {
-  bcrypt.hash(req.body.password, rounds, (error, hash) => {
-    if (error) {
-      res.status(500).json(error);
-    } else {
-      const newUser = User({ email: req.body.email, password: hash });
-      newUser
-        .save()
-        .then((user) => {
-          res.status(200).json({ token: generateToken(user) });
-        })
-        .catch((error) => {
-          res.status(500).json(error);
-        });
-    }
-  });
+router.post("/register", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email }).exec();
+    if (user) return res.status(400).send("Email is already taken");
+    const salt = await bcrypt.genSalt(10);
+    const hash = await bcrypt.hash(password, salt);
+    const newUser = await new User({ email, password: hash }).save();
+    res.status(200).json({ token: generateToken(newUser) });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json(error);
+  }
 });
 
 function generateToken(user) {
-  return jwt.sign({ data: user }, tokenSecret, { expiresIn: "1h" });
+  return jwt.sign({ data: user }, process.env.TOKEN_SECRET, {
+    expiresIn: "1h",
+  });
 }
 
 module.exports = router;
